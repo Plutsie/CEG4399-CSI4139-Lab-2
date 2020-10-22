@@ -12,14 +12,14 @@
             <fieldset class="fldset-class">
                 <legend class="legend-class"><p style="font-size:30px">Signup Page</p></legend>
           
-                <!--Field form that registers username,phonenumber and passwords-->
+                <!--Field form that registers username,email and passwords-->
         <form id="register" autocomplete="off"><figure> 
             <label>Username</label><br>
             <input id="username" type="text" name="username" placeholder="username"/><br>
             <br><label>Password</label><br>
             <input id="password" type="password" name="password" placeholder="password"/><br>
-            <br><label>Phonenumber</label><br>
-            <input id="phonenumber" type="number" name="phonenumber" placeholder="phonenumber"/><br>
+            <br><label>Email</label><br>
+            <input id="email" type="email" name="email" placeholder="email"/><br>
             
             <!--Button-->
             <br><input type="submit" value="Create Account"/><br/>
@@ -36,7 +36,7 @@
                     var SignData = {
                         username: $("#username").val(),
                         password: $("#password").val(),
-                        phonenumber: $("#phonenumber").val(),
+                        email: $("#email").val(),
                     }
                     // Successfull popup if user credentials ok/accepted
                     $.post("/api/signup", SignData, function(res){

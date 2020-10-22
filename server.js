@@ -54,7 +54,7 @@ mongoose.connect('mongodb://localhost:27017/lab2db', {useNewUrlParser: true, use
 const Account = new Schema({
     username: String,
     password: String,
-    phonenumber: String
+    email: String
 })
 
 const AccModel = mongoose.model("Account", Account)
@@ -83,7 +83,7 @@ app.post('/api/signup', async (req, res) => {
 
         if(!req.body.username) throw "Username is missing"
         if(!req.body.password) throw "Password is missing"
-        if(!req.body.phonenumber) throw "Phonenumber is missing"
+        if(!req.body.email) throw "Email is missing"
 
         //Hash password using bcrypt
         var hashedPass = await bcrypt.hash(req.body.password, 10)
@@ -92,7 +92,7 @@ app.post('/api/signup', async (req, res) => {
         var accDoc = new AccModel()
         accDoc.username = req.body.username
         accDoc.password = hashedPass
-        accDoc.phonenumber = req.body.phonenumber
+        accDoc.email = req.body.email
 
         //Save to database
         await new Promise((resolve, reject) => {
@@ -183,9 +183,9 @@ app.post('/api/verification', async (req, res) => {
     }
   });
 
-  var mailOptions = {
+  var mailOptions(email) = {
     from: 'ceg4399group21@gmail.com',
-    to: 'ceg4399group21@gmail.com',
+    to: email,
     subject: 'Verification code',
     text: verificationCode
   };
