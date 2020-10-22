@@ -167,7 +167,7 @@ app.post('/api/login', async (req, res) => {
 
         var mailOptions= {
           from: 'ceg4399group21@gmail.com',
-          to: email,
+          to: accDoc.email,
           subject: 'Verification code',
           text: verificationCode
         };
