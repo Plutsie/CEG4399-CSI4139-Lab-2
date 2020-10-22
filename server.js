@@ -2,9 +2,9 @@
 //Creating and initializing the website server
 
 //npm install ejs
-//npm install the express module 
+//npm install the express module
 const express = require('express')
-//npm install the body parser module 
+//npm install the body parser module
 var bodyParser = require('body-parser')
 //npm install the mongoose module
 const mongoose = require('mongoose')
@@ -12,7 +12,7 @@ const mongoose = require('mongoose')
 const bcrypt = require('bcrypt');
 // npm install express-session module
 var session = require('express-session')
-// install the MongoDB server first at : https://www.mongodb.com/try/download/community  
+// install the MongoDB server first at : https://www.mongodb.com/try/download/community
 // and then download the MongoDB compass at: https://www.mongodb.com/try/download/compass?jmp=hero
 
 // npm install connect-mongo module
@@ -44,7 +44,7 @@ app.use(session({
     }
 }))
 
-// To use this take forms to be able to access in req 
+// To use this take forms to be able to access in req
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
@@ -71,7 +71,7 @@ app.post('/api/signup', async (req, res) => {
     var result = {success: false}
 
     try{
-        //Searches if username is already in the database, and sends an error message if so 
+        //Searches if username is already in the database, and sends an error message if so
         var foundDoc = await new Promise((resolve, reject) => {
             AccModel.findOne({username: req.body.username}, function(err, doc){
                 if(err) reject(err)
@@ -93,7 +93,7 @@ app.post('/api/signup', async (req, res) => {
         accDoc.username = req.body.username
         accDoc.password = hashedPass
         accDoc.phonenumber = req.body.phonenumber
-        
+
         //Save to database
         await new Promise((resolve, reject) => {
             accDoc.save(function(e){
@@ -128,7 +128,7 @@ app.post('/api/login', async (req, res) => {
         if(req.session.uid){
             throw "You have logged in."
         }
-        
+
 
         //If one field is missing, appropriate messages are sent
         var username = req.body.username
@@ -172,13 +172,33 @@ app.get('/verification', (req, res) => {
     res.sendFile(__dirname + '/verification.html')
 })
 app.post('/api/verification', async (req, res) => {
+  var nodemailer = require('nodemailer');
+  var verificationCode = //beta
+
+  var transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'ceg4399group21@gmail.com',
+      pass: 'lab2ceg4399'
+    }
+  });
+
+  var mailOptions = {
+    from: 'ceg4399group21@gmail.com',
+    to: 'ceg4399group21@gmail.com',
+    subject: 'Verification code',
+    text: verificationCode
+  };
+  });
+
+  ///
     var result = {response: false}
 
     try{
         if(req.session.uid){
             throw "Your account has been verified!"
         }
-        
+
         //If one field is missing, appropriate messages are sent
         var username = req.body.username
         if(!username) throw "Username is missing!"
