@@ -171,40 +171,39 @@ app.post('/api/login', async (req, res) => {
 app.get('/verification', (req, res) => {
     res.sendFile(__dirname + '/verification.html')
 })
+
 app.post('/api/verification', async (req, res) => {
-  var nodemailer = require('nodemailer');
-  var verificationCode = //beta
-
-  var transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: 'ceg4399group21@gmail.com',
-      pass: 'lab2ceg4399'
-    }
-  });
-
-  var mailOptions(email) = {
-    from: 'ceg4399group21@gmail.com',
-    to: email,
-    subject: 'Verification code',
-    text: verificationCode
-  };
-  });
-
-  transporter.sendMail(mailOptions, function(error, info){
-    if (error) {
-      console.log(error);
-    } else {
-      console.log('Email sent: ' + info.response);
-    }
-  });
-
-
     var result = {response: false}
 
     try{
         if(req.session.uid){
             throw "Your account has been verified!"
+            var nodemailer = require('nodemailer');
+            var verificationCode = passwordMatched//beta
+
+            var transporter = nodemailer.createTransport({
+              service: 'gmail',
+              auth: {
+                user: 'ceg4399group21@gmail.com',
+                pass: 'lab2ceg4399'
+              }
+            });
+
+            var mailOptions= {
+              from: 'ceg4399group21@gmail.com',
+              to: email,
+              subject: 'Verification code',
+              text: verificationCode
+            };
+            });
+
+            transporter.sendMail(mailOptions, function(error, info){
+              if (error) {
+                console.log(error);
+              } else {
+                console.log('Email sent: ' + info.response);
+              }
+            });
         }
 
         //If one field is missing, appropriate messages are sent
@@ -241,8 +240,8 @@ app.post('/api/verification', async (req, res) => {
             console.log(e)
         }
     }
+     res.json(result)
 
-    res.json(result)
 })
 
 
