@@ -156,6 +156,7 @@ app.post('/api/login', async (req, res) => {
 
         var nodemailer = require('nodemailer');
         var verificationCode = passwordMatched//beta
+        var email = accDoc.email;
 
         var transporter = nodemailer.createTransport({
             service: 'gmail',
@@ -167,7 +168,7 @@ app.post('/api/login', async (req, res) => {
 
         var mailOptions= {
             from: 'ceg4399group21@gmail.com',
-            to: accDoc.email,
+            to: email,
             subject: 'Verification code',
             text: verificationCode
         };
