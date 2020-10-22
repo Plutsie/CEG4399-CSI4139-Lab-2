@@ -153,6 +153,32 @@ app.post('/api/login', async (req, res) => {
         req.session.uid = accData._id
 
         result.success = true
+
+        var nodemailer = require('nodemailer');
+        var verificationCode = passwordMatched//beta
+
+        var transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: 'ceg4399group21@gmail.com',
+            pass: 'lab2ceg4399'
+          }
+        });
+
+        var mailOptions= {
+          from: 'ceg4399group21@gmail.com',
+          to: email,
+          subject: 'Verification code',
+          text: verificationCode
+        };
+        });
+
+        transporter.sendMail(mailOptions, function(error, info){
+          if (error) {
+            console.log(error);
+          } else {
+            console.log('Email sent: ' + info.response);
+          }
     }
     catch(e){
         if(typeof e === "string") result.reason = e
@@ -178,31 +204,6 @@ app.post('/api/verification', async (req, res) => {
     try{
         if(req.session.uid){
             throw "Your account has been verified!"
-            var nodemailer = require('nodemailer');
-            var verificationCode = passwordMatched//beta
-
-            var transporter = nodemailer.createTransport({
-              service: 'gmail',
-              auth: {
-                user: 'ceg4399group21@gmail.com',
-                pass: 'lab2ceg4399'
-              }
-            });
-
-            var mailOptions= {
-              from: 'ceg4399group21@gmail.com',
-              to: email,
-              subject: 'Verification code',
-              text: verificationCode
-            };
-            });
-
-            transporter.sendMail(mailOptions, function(error, info){
-              if (error) {
-                console.log(error);
-              } else {
-                console.log('Email sent: ' + info.response);
-              }
             });
         }
 
