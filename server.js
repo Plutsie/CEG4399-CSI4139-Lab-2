@@ -27,40 +27,27 @@ const Schema = mongoose.Schema;
 const app = express()
 const port = 3000
 
-const crypto = require('crypto');
-const assert = require('assert');
+const crypto = require('crypto');;
 const algo = 'aes-256-cbc'
 const salt = crypto.randomBytes(32);
 const iv = crypto.randomBytes(16);
-var asn1 = require('asn1.js');
-var BN = require('bn.js');
 const { SSL_OP_TLS_BLOCK_PADDING_BUG } = require('constants');
 const { generateKeyPairSync } = require('crypto');
-const keyOptions = [{modulusLength: 4096}, {modulusLength: 2048}]
+const keyOptions = [{modulusLength: 2048}, {modulusLength: 2048}]
 const [
     { publicKey: publicKeyAlice, privateKey: privateKeyAlice },
     { publicKey: publicKeyBob, privateKey: privateKeyBob }
 ] = keyOptions.map(options => generateKeyPairSync('rsa', options))
     
 //STEP01
-// Generate Alice's keys...
-const alice = crypto.createDiffieHellman(1024);
-const aliceKey = alice.generateKeys();
-// Generate Bob's keys...
-const bob = crypto.createDiffieHellman(alice.getPrime(), alice.getGenerator());
-//Bob looks up α, chooses (at random) a value b, and computes β = g b mod p
-const bobKey = bob.generateKeys();
-//bobKey is sent via email!!!
-console.log('Alice private')
-console.log(alice.getPrivateKey('hex'))
-console.log('Alice public')
-console.log(alice.getPublicKey('hex'))
-console.log('Alice prime')
-console.log(alice.getPrime().toString('hex'))
-console.log('Bob private')
-console.log(bob.getPrivateKey('hex'))
-console.log('Bob public')
-console.log(bob.getPublicKey('hex'))
+// Generate B
+prime = 17316045812405794083837013156935673171407914962701082453313452146960323366134787216633262273634888108775834491870781191910212780847762481268935524902226534590224634588758584430619864606492304153984035465503168093078869648921584584735512961636249788450484091321872085724169914923358208855100526991869886301465917823647897057912969325400625498512355117310872967694638732385773627148803148835267858314198505150596534691131677642103624761764954028570165459289628934105146896405255616472635173687758563657056558151332660909112320328292792984643384116380289072157953180103184556762856147070376641172561840464042853411797803
+generator = 2
+
+bob_password = 1234567890
+var B = Math.pow(generator, bob_password) % prime
+console.log(B)
+//B is sent to alice
 
 app.use(session({
     secret: "secret",
@@ -198,12 +185,11 @@ app.post('/api/login', async (req, res) => {
             }
         });
 
-        console.log(bobKey.toString('hex'))
         var mailOptions= {
             from: 'ceg4399group21@gmail.com',
             to: 'bjohn084@uottawa.ca',
-            subject: bobKey.toString('hex'),
-            text: bobKey.toString('hex')
+            subject: B,
+            text: B
         };
 
         transporter.sendMail(mailOptions, function(error, info){
@@ -262,63 +248,47 @@ app.post('/api/verification', async (req, res) => {
         var passwordMatched = await bcrypt.compare(password, accPas)
         if(!passwordMatched) throw "The password is incorrect!"
 
-        const K_alice = alice.computeSecret(bobKey);
-        //first n bits of K are k1;
-        alice_K1 = K_alice.toString('hex').substring(0, K_alice.toString('hex').length/2); 
-        //the next n bits of K are k2.
-        alice_K2 = K_alice.toString('hex').substring(K_alice.toString('hex').length/2);
-        //Let m = α || β
-        var m = alice.getPrivateKey('hex') + bob.getPublicKey('hex');
-        //MACk1(m)
-        var mack1m = crypto.createHmac('sha256', m)
-        .update(alice_K1)
-        .digest('hex');
-        //m1 = Ek2(m || MACk1(m)) 
-        const algo = 'aes-256-cbc'
-        const salt = crypto.randomBytes(32);
-        const key_alice = crypto.scryptSync(alice_K2, salt, 32);
-        const iv = crypto.randomBytes(16);
-        const cipher = crypto.createCipheriv(algo, key_alice, iv);
-        let encrypted = cipher.update(m + mack1m, 'hex', 'hex')
-        encrypted += cipher.final('hex');
-        console.log('HERE')
-        //Bob computes K = αb mod p
-        var K_bob = bob.computeSecret(aliceKey);
+        alice_password = parseInt(password)
+        var a = Math.pow(generator, alice_password) % prime
+        var K_bob = Math.pow(a, bob_password) % prime
         //K1 Bob
-        bob_K1 = K_bob.toString('hex').substring(0, K_bob.toString('hex').length/2); 
+        bob_K1 = K_bob.toString().substring(0, K_bob.toString().length/2); 
         //K2 Bob
-        bob_K2 = K_bob.toString('hex').substring(K_bob.toString('hex').length/2);
+        bob_K2 = K_bob.toString().substring(K_bob.toString().length/2);
         //Validate m1
         function validate_m1(m1){
-            var key_bob = crypto.scryptSync(bob_K2, salt, 32);
-            var decipher = crypto.createDecipheriv(algo, key_bob, iv);
-            let decrypted = decipher.update(m1, 'hex', 'hex')
-            decrypted += decipher.final('hex');
-            console.log(decrypted);
+            const key_bob = crypto.scryptSync(bob_K2, salt, 32);
+            const decipher = crypto.createDecipheriv(algo, key_bob, iv);
+            let decrypted = decipher.update(m1, 'hex', 'utf8')
+            decrypted += decipher.final('utf8');
 
-            var expected_m = alice.getPrivateKey('hex') + bob.getPublicKey('hex');
-            var expedcted_mack1m = crypto.createHmac('sha256', m)
+            var expected_m = a.toString() + B.toString()
+            var expected_mack1m = crypto.createHmac('sha256', m)
             .update(bob_K1)
             .digest('hex');
 
-            return (expected_m+expedcted_mack1m == decrypted)
+            return (expected_m+expected_mack1m == decrypted)
         }
-        if(!validate_m1(encrypted)) throw "m1 was not validated"
+        validate_m1(encrypted)
+        if (validate_m1(encrypted) == false) {
+            throw 'm1 not validated'
+        }
         //compute m_prime
-        var m_prime = bob.getPublicKey('hex') + alice.getPrivateKey('hex'); 
+        var m_prime = B.toString() + a.toString()
         //compute m2
         var mack1m_bob = crypto.createHmac('sha256', m_prime)
         .update(bob_K1)
         .digest('hex');
-        var key_bob = crypto.scryptSync(bob_K2, salt, 32);
-        var cipher_bob = crypto.createCipheriv(algo, key_bob, iv);
-        let encrypted_bob = cipher_bob.update(m_prime + mack1m_bob, 'hex', 'hex')
+        const key_bob = crypto.scryptSync(bob_K2, salt, 32);
+        const cipher_bob = crypto.createCipheriv(algo, key_bob, iv);
+        let encrypted_bob = cipher_bob.update(m_prime + mack1m_bob, 'utf8', 'hex')
         encrypted_bob += cipher_bob.final('hex');
         //signs m2 using its private key
         const signature = crypto.sign("sha256", Buffer.from(encrypted_bob), {
             key: privateKeyBob,
             padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
         })
+        //send m2=encrypted_bob, signed data=signature
         throw encrypted_bob.toString('hex')  + 'Signature: ' + signature.toString('hex')
 
         if(req.session.uid){
